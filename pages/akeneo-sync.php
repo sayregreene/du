@@ -1,0 +1,1 @@
+Akeneo Sync Data Page
