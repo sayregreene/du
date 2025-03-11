@@ -162,10 +162,10 @@ function formatAttributeLabel(name) {
 function formatValueCode(value) {
     if (!value) return '';
 
-    // If value is numeric, prefix with 'val_'
-    if (!isNaN(value) && value !== '') {
-        return 'val_' + value.toString().replace(/\./g, '_');
-    }
+    // If value is numeric, prefix with 'val_' - Removed
+    // if (!isNaN(value) && value !== '') {
+    //     return 'val_' + value.toString().replace(/\./g, '_');
+    // }
 
     return value
         .toLowerCase()
@@ -237,5 +237,103 @@ export default {
     formatValueLabel,
     confirmDialog,
     showAlert,
-    downloadFile
+    downloadFile,
+    addTableStyles,
+    applyTableStyles  // Add these new functions
 };
+
+/**
+ * Adds table styling for fixed headers and full-width columns
+ */
+function addTableStyles() {
+    // Check if styles are already added
+    if (document.getElementById('attribute-comparison-table-styles')) {
+        return; // Already added
+    }
+    
+    // Create style element
+    const styleElement = document.createElement('style');
+    styleElement.id = 'attribute-comparison-table-styles';
+    
+    // Add the CSS
+    styleElement.textContent = `
+    /* Sticky headers and full-width tables */
+    .attribute-comparison-tables thead {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        box-shadow: 0 1px 0 rgba(27, 31, 35, 0.1);
+    }
+
+    .attribute-comparison-tables table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .attribute-comparison-tables th, 
+    .attribute-comparison-tables td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Column width distribution */
+    .attribute-comparison-tables .col-name {
+        width: 40%;
+    }
+
+    .attribute-comparison-tables .col-count {
+        width: 15%;
+    }
+
+    .attribute-comparison-tables .col-status {
+        width: 25%;
+    }
+
+    .attribute-comparison-tables .col-actions {
+        width: 20%;
+    }
+
+    /* Improved scrollable table areas */
+    .table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+    }
+
+    .table-container table {
+        margin-bottom: 0;
+        border: none;
+    }
+    `;
+    
+    // Add to document head
+    document.head.appendChild(styleElement);
+}
+
+/**
+ * Apply table styles to the appropriate elements
+ */
+function applyTableStyles() {
+    // First ensure styles are added
+    addTableStyles();
+    
+    // Add classes to table containers
+    document.querySelectorAll('#attributes-table, #attribute-values-list').forEach(table => {
+        const container = table.closest('.overflow-auto');
+        if (container) {
+            container.classList.add('attribute-comparison-tables');
+            container.classList.add('table-container');
+        }
+    });
+    
+    // Update column classes if needed
+    document.querySelectorAll('#attributes-table th, #attribute-values-list th').forEach((th, index) => {
+        if (index === 0) th.classList.add('col-name');
+        if (index === 1) th.classList.add('col-count');
+        if (index === 2) th.classList.add('col-status');
+        if (index === 3) th.classList.add('col-actions');
+    });
+}

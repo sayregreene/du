@@ -41,9 +41,10 @@ function initialize() {
         btnDeleteSelected: uiUtils.getElement('btn-delete-selected')
     };
     
+    
     // Initialize mappings state if needed
     initializeMappingsTab();
-    
+   
     // Subscribe to state changes
     state.subscribe((newState, path) => {
         if (path.startsWith('mappingsTab')) {

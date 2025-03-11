@@ -66,10 +66,10 @@
                             <table class="table table-sm" id="attributes-table">
                                 <thead>
                                     <tr>
-                                        <th class="px-3 py-2">Attribute Name</th>
-                                        <th class="px-3 py-2 text-right">Value Count</th>
-                                        <th class="px-3 py-2">Akeneo Status</th>
-                                        <th class="px-3 py-2">Actions</th>
+                                        <th class="px-3 py-2 col-name">Attribute Name</th>
+                                        <th class="px-3 py-2 col-count text-right">Value Count</th>
+                                        <th class="px-3 py-2 col-status">Akeneo Status</th>
+                                        <th class="px-3 py-2 col-actions">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="attributes-list">
@@ -259,11 +259,11 @@
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th class="px-3 py-2">Pivotree Value</th>
-                                            <th class="px-3 py-2">UOM</th>
-                                            <th class="px-3 py-2">Akeneo Option</th>
-                                            <th class="px-3 py-2">Status</th>
-                                            <th class="px-3 py-2">Actions</th>
+                                            <th class="px-3 py-2 col-name">Pivotree Value</th>
+                                            <th class="px-3 py-2 col-count">UOM</th>
+                                            <th class="px-3 py-2 col-status">Akeneo Option</th>
+                                            <th class="px-3 py-2 col-status">Status</th>
+                                            <th class="px-3 py-2 col-actions">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="attribute-values-list">
@@ -352,98 +352,98 @@
         </div>
     </div>
     <div id="content-view-mappings" class="d-none">
-    <div class="Box mb-3">
-        <div class="Box-header">
-            <h3 class="Box-title">Mapping Overview</h3>
-        </div>
-        <div class="Box-body">
-            <div class="d-flex flex-items-start mb-2">
-                <!-- Search -->
-                <div class="flex-auto mr-3">
-                    <input type="text" id="mappings-search-input" class="form-control input-sm width-full"
-                        placeholder="Search mappings" aria-label="Search mappings">
-                </div>
-                <!-- Filter Type -->
-                <div class="mr-3">
-                    <select id="mapping-type-filter" class="form-select">
-                        <option value="attributes">Attribute Mappings</option>
-                        <option value="values">Value Mappings</option>
-                    </select>
-                </div>
-                <!-- Search Button -->
-                <div>
-                    <button class="btn" id="mappings-search-button">Search</button>
+        <div class="Box mb-3">
+            <div class="Box-header">
+                <h3 class="Box-title">Mapping Overview</h3>
+            </div>
+            <div class="Box-body">
+                <div class="d-flex flex-items-start mb-2">
+                    <!-- Search -->
+                    <div class="flex-auto mr-3">
+                        <input type="text" id="mappings-search-input" class="form-control input-sm width-full"
+                            placeholder="Search mappings" aria-label="Search mappings">
+                    </div>
+                    <!-- Filter Type -->
+                    <div class="mr-3">
+                        <select id="mapping-type-filter" class="form-select">
+                            <option value="attributes">Attribute Mappings</option>
+                            <option value="values">Value Mappings</option>
+                        </select>
+                    </div>
+                    <!-- Search Button -->
+                    <div>
+                        <button class="btn" id="mappings-search-button">Search</button>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <div class="Box mb-3">
+            <div class="Box-header d-flex flex-items-center">
+                <h3 class="Box-title flex-auto">Existing Mappings</h3>
+                <div class="text-small text-gray">
+                    Showing <span id="mappings-showing-start">0</span>-<span id="mappings-showing-end">0</span> of <span
+                        id="total-mappings">0</span>
+                </div>
+            </div>
+            <div class="Box-body p-0">
+                <div class="overflow-auto" style="max-height: 600px;">
+                    <!-- Attribute Mappings Table (initially visible) -->
+                    <table class="table table-sm" id="attribute-mappings-table">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2">Pivotree Attribute</th>
+                                <th class="px-3 py-2">Akeneo Attribute</th>
+                                <th class="px-3 py-2">Type</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attribute-mappings-list">
+                            <!-- Attribute mappings will be inserted here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Value Mappings Table (initially hidden) -->
+                    <table class="table table-sm d-none" id="value-mappings-table">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2">Pivotree Attribute</th>
+                                <th class="px-3 py-2">Pivotree Value</th>
+                                <th class="px-3 py-2">Akeneo Attribute</th>
+                                <th class="px-3 py-2">Akeneo Value</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="value-mappings-list">
+                            <!-- Value mappings will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="Box-footer">
+                <div class="d-flex flex-items-center">
+                    <div class="flex-auto">
+                        Page <span id="mappings-current-page">1</span> of <span id="mappings-total-pages">1</span>
+                    </div>
+                    <div class="BtnGroup">
+                        <button class="BtnGroup-item btn btn-sm" id="mappings-prev-page" disabled>
+                            Previous
+                        </button>
+                        <button class="BtnGroup-item btn btn-sm" id="mappings-next-page">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="Box-footer text-right">
+            <button class="btn btn-sm mr-2" id="btn-delete-selected">Delete Selected</button>
+            <button class="btn btn-sm" id="btn-export-all-mappings">Export All Mappings</button>
         </div>
     </div>
-
-    <div class="Box mb-3">
-        <div class="Box-header d-flex flex-items-center">
-            <h3 class="Box-title flex-auto">Existing Mappings</h3>
-            <div class="text-small text-gray">
-                Showing <span id="mappings-showing-start">0</span>-<span id="mappings-showing-end">0</span> of <span
-                    id="total-mappings">0</span>
-            </div>
-        </div>
-        <div class="Box-body p-0">
-            <div class="overflow-auto" style="max-height: 600px;">
-                <!-- Attribute Mappings Table (initially visible) -->
-                <table class="table table-sm" id="attribute-mappings-table">
-                    <thead>
-                        <tr>
-                            <th class="px-3 py-2">Pivotree Attribute</th>
-                            <th class="px-3 py-2">Akeneo Attribute</th>
-                            <th class="px-3 py-2">Type</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attribute-mappings-list">
-                        <!-- Attribute mappings will be inserted here -->
-                    </tbody>
-                </table>
-
-                <!-- Value Mappings Table (initially hidden) -->
-                <table class="table table-sm d-none" id="value-mappings-table">
-                    <thead>
-                        <tr>
-                            <th class="px-3 py-2">Pivotree Attribute</th>
-                            <th class="px-3 py-2">Pivotree Value</th>
-                            <th class="px-3 py-2">Akeneo Attribute</th>
-                            <th class="px-3 py-2">Akeneo Value</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="value-mappings-list">
-                        <!-- Value mappings will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="Box-footer">
-            <div class="d-flex flex-items-center">
-                <div class="flex-auto">
-                    Page <span id="mappings-current-page">1</span> of <span id="mappings-total-pages">1</span>
-                </div>
-                <div class="BtnGroup">
-                    <button class="BtnGroup-item btn btn-sm" id="mappings-prev-page" disabled>
-                        Previous
-                    </button>
-                    <button class="BtnGroup-item btn btn-sm" id="mappings-next-page">
-                        Next
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="Box-footer text-right">
-        <button class="btn btn-sm mr-2" id="btn-delete-selected">Delete Selected</button>
-        <button class="btn btn-sm" id="btn-export-all-mappings">Export All Mappings</button>
-    </div>
-</div>
 </div>
 
 <!-- Export Modal -->

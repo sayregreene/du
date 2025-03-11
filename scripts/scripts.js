@@ -73,6 +73,11 @@ const navigation = {
                 label: 'Attribute Data',
                 page: 'attribute-comparison',
                 icon: ''
+            },
+            {
+                label: 'Normalization',
+                page: 'normalization',
+                icon: ''
             }
         ]
     },
@@ -214,55 +219,45 @@ function updateSubmenu(section) {
 // Load page content
 async function loadPage(page, updateHistory = true, isSubmenuClick = false) {
     try {
-        // Only update navigation when it's a primary nav click
+        showLoading('Loading page...'); // Add loading indicator if available
+        
+        // Handle navigation UI updates
         if (!isSubmenuClick) {
             const section = page.split('-')[0];
             document.querySelector('.nav-primary a.active')?.classList.remove('active');
             const activeLink = document.querySelector(`.nav-primary a[data-page="${section}"]`);
             activeLink?.classList.add('active');
-
-            // Update submenu
             updateSubmenu(section);
         }
 
-        // Fetch and render main content
+        // Fetch page content
         const mainResponse = await fetch(`pages/${page}.php`);
         if (!mainResponse.ok) throw new Error(`Failed to load main content for ${page}`);
         const mainHtml = await mainResponse.text();
-        // mainContent.insertAdjacentHTML('afterbegin', '<div style="background:red;color:white;padding:10px;">Debug marker - Content was loaded</div>');
-
+        
+        // INSERT THE CONTENT - this is the critical missing piece
+        mainContent.innerHTML = mainHtml;
+        
         // Update browser history
         if (updateHistory) {
             history.pushState({ page }, '', `?page=${page}`);
         }
 
-        if (page === 'pivotree-product-data') {
-            initializePivotreeProducts();
-        } else if (page === 'attribute-comparison') {
-            // Initialize the attribute comparison page
-            initializeAttributeComparison();
-        }
-
-        // Add this at the end of your loadPage function in scripts.js
+        // Initialize page-specific functionality AFTER content is in the DOM
         if (page === 'attribute-comparison') {
-            // Give the DOM a moment to update before initializing
-            setTimeout(() => {
-                console.log('Delayed initialization of attribute comparison');
-                if (window.attributeComparisonModule && window.attributeComparisonModule.initialize) {
-                    window.attributeComparisonModule.initialize();
-                } else {
-                    console.log('Module not available for delayed initialization');
-                    // Try the global function as a fallback
-                    if (typeof initializeAttributeComparison === 'function') {
-                        initializeAttributeComparison();
-                    }
-                }
-            }, 500);
+            console.log('Initializing attribute comparison after content load');
+            if (typeof initializeAttributeComparison === 'function') {
+                initializeAttributeComparison();
+            }
+        } else if (page === 'pivotree-product-data') {
+            initializePivotreeProducts();
         }
 
     } catch (error) {
         console.error('Error loading page:', error);
-        mainContent.innerHTML = '<p style="color:red;">Error loading page.</p>';
+        mainContent.innerHTML = `<p style="color:red;">Error loading page: ${error.message}</p>`;
+    } finally {
+        hideLoading(); // Hide loading indicator
     }
 }
 

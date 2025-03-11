@@ -39,6 +39,8 @@ function initialize() {
         newValueLabel: uiUtils.getElement('new-value-label')
     };
     
+    uiUtils.applyTableStyles();
+
     // Subscribe to state changes
     state.subscribe((newState, path) => {
         if (path.startsWith('valuesTab')) {
@@ -55,6 +57,9 @@ function initialize() {
     loadMappedAttributes();
 }
 
+/**
+ * Set up event listeners for values tab elements
+ */
 /**
  * Set up event listeners for values tab elements
  */
@@ -103,14 +108,27 @@ function setupEventListeners() {
         });
     }
     
-    // New value button
-    if (elements.btnNewValue && elements.newValueSection) {
+    // New value button - FIXED VERSION
+    if (elements.btnNewValue) {
         elements.btnNewValue.addEventListener('click', () => {
-            elements.newValueSection.classList.toggle('d-none');
+            console.log('New value button clicked');
             
-            if (!elements.newValueSection.classList.contains('d-none')) {
-                // Auto-generate value code and label when showing the section
-                generateNewValueCode();
+            // Toggle visibility of the new value section
+            if (elements.newValueSection) {
+                elements.newValueSection.classList.toggle('d-none');
+                
+                // Only auto-generate when showing the section
+                if (!elements.newValueSection.classList.contains('d-none')) {
+                    // Auto-generate value code and label when showing the section
+                    generateNewValueCode();
+                    
+                    // Focus the code field for editing
+                    if (elements.newValueCode) {
+                        elements.newValueCode.focus();
+                    }
+                }
+            } else {
+                console.error('newValueSection element not found');
             }
         });
     }
@@ -129,37 +147,280 @@ function setupEventListeners() {
     }
 }
 
+
+/**
+ * Calculate similarity between two strings (simple implementation)
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {number} - Similarity score (0-1 where 1 is identical)
+ */
+function calculateSimilarity(a, b) {
+    // Convert to lowercase for case-insensitive comparison
+    const strA = a.toLowerCase();
+    const strB = b.toLowerCase();
+    
+    // Direct match
+    if (strA === strB) return 1;
+    
+    // Check if one contains the other
+    if (strA.includes(strB) || strB.includes(strA)) {
+        return 0.8;
+    }
+    
+    // Check for word matches
+    const wordsA = strA.split(/\s+/);
+    const wordsB = strB.split(/\s+/);
+    
+    // Count matching words
+    const commonWords = wordsA.filter(word => wordsB.includes(word)).length;
+    if (commonWords > 0) {
+        return 0.5 + (0.3 * commonWords / Math.max(wordsA.length, wordsB.length));
+    }
+    
+    // Simple character-based similarity
+    let matches = 0;
+    const maxLength = Math.max(strA.length, strB.length);
+    const minLength = Math.min(strA.length, strB.length);
+    
+    for (let i = 0; i < minLength; i++) {
+        if (strA[i] === strB[i]) matches++;
+    }
+    
+    return matches / maxLength;
+}
+
+
+
+
 /**
  * Load mapped attributes for the Values tab
  */
+// async function loadMappedAttributes() {
+//     if (!elements.attributeSelector) return;
+    
+//     // Clear the dropdown first
+//     elements.attributeSelector.innerHTML = '<option value="">-- Select Attribute --</option>';
+    
+//     const currentState = state.getState();
+    
+//     // Filter attributes that have been mapped
+//     const mappedAttributes = currentState.mappings.attributes.filter(mapping =>
+//         mapping.akeneo_attribute_code || mapping.new_attribute_code
+//     );
+    
+//     if (mappedAttributes.length === 0) {
+//         const option = document.createElement('option');
+//         option.disabled = true;
+//         option.textContent = 'No mapped attributes found. Map attributes first.';
+//         elements.attributeSelector.appendChild(option);
+//         return;
+//     }
+    
+//     // Add mapped attributes to the dropdown
+//     mappedAttributes.forEach(attr => {
+//         const option = document.createElement('option');
+//         option.value = attr.pivotree_attribute_name;
+//         option.textContent = `${attr.pivotree_attribute_name} → ${attr.akeneo_attribute_code || attr.new_attribute_code}`;
+//         elements.attributeSelector.appendChild(option);
+//     });
+// }
+
 async function loadMappedAttributes() {
     if (!elements.attributeSelector) return;
     
-    // Clear the dropdown first
-    elements.attributeSelector.innerHTML = '<option value="">-- Select Attribute --</option>';
-    
-    const currentState = state.getState();
-    
-    // Filter attributes that have been mapped
-    const mappedAttributes = currentState.mappings.attributes.filter(mapping =>
-        mapping.akeneo_attribute_code || mapping.new_attribute_code
-    );
-    
-    if (mappedAttributes.length === 0) {
+    // Show loading indicator
+    uiUtils.showLoading('Loading attributes...');
+
+    try {
+        // Clear the dropdown first
+        elements.attributeSelector.innerHTML = '<option value="">-- Select Attribute --</option>';
+        
+        const currentState = state.getState();
+        
+        // Filter attributes that have been mapped
+        const mappedAttributes = currentState.mappings.attributes.filter(mapping =>
+            mapping.akeneo_attribute_code || mapping.new_attribute_code
+        );
+        
+        if (mappedAttributes.length === 0) {
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.textContent = 'No mapped attributes found. Map attributes first.';
+            elements.attributeSelector.appendChild(option);
+            return;
+        }
+        
+        // Keep track of promises to load unmapped counts
+        const countPromises = [];
+        
+        // Prepare the dropdown items
+        const dropdownItems = mappedAttributes.map(attr => {
+            // Start a promise to get the unmapped count
+            const countPromise = getUnmappedValuesCount(attr.pivotree_attribute_name);
+            countPromises.push(countPromise);
+            
+            return {
+                attr,
+                countPromise
+            };
+        });
+        
+        // Wait for all count promises to resolve
+        const counts = await Promise.all(countPromises);
+        
+        // Add mapped attributes to the dropdown with counts
+        dropdownItems.forEach((item, index) => {
+            const attr = item.attr;
+            const unmappedCount = counts[index];
+            
+            const option = document.createElement('option');
+            option.value = attr.pivotree_attribute_name;
+            
+            // Format the label with the unmapped count
+            let optionText = `${attr.pivotree_attribute_name} → ${attr.akeneo_attribute_code || attr.new_attribute_code}`;
+            
+            if (unmappedCount !== null) {
+                // Add the unmapped count if available
+                optionText += ` (${unmappedCount} unmapped values)`;
+            }
+            
+            option.textContent = optionText;
+            
+            // If there are unmapped values, add a data attribute for styling
+            if (unmappedCount > 0) {
+                option.dataset.hasUnmapped = 'true';
+                option.style.fontWeight = 'bold';
+                option.style.color = '#bf3989'; // Use a highlight color for attributes with unmapped values
+            }
+            
+            elements.attributeSelector.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading mapped attributes:', error);
+        
+        // Add a fallback option
         const option = document.createElement('option');
         option.disabled = true;
-        option.textContent = 'No mapped attributes found. Map attributes first.';
+        option.textContent = 'Error loading attributes. Please try again.';
         elements.attributeSelector.appendChild(option);
-        return;
+    } finally {
+        uiUtils.hideLoading();
     }
+}
+
+/**
+ * Get the count of unmapped values for a specific attribute
+ * @param {String} attributeName - The attribute name to check
+ * @returns {Promise<Number>} - Promise resolving to the count of unmapped values
+ */
+async function getUnmappedValuesCount(attributeName) {
+    try {
+        // Get all values for this attribute
+        const valuesResponse = await apiClient.loadAttributeValues(attributeName);
+        
+        // Process values - handle semicolon-separated values
+        const allValues = [];
+        
+        // Process each value
+        (valuesResponse.values || []).forEach(value => {
+            const originalValue = value.attribute_value;
+            
+            // Check if the value contains semicolons
+            if (originalValue && originalValue.includes(';')) {
+                // Split by semicolon and create separate entries
+                const splitValues = originalValue.split(';')
+                    .map(v => v.trim())
+                    .filter(v => v);
+                
+                splitValues.forEach(splitValue => {
+                    allValues.push({
+                        attribute_value: splitValue,
+                        uom: value.uom
+                    });
+                });
+            } else {
+                // Just add the value as is
+                allValues.push({
+                    attribute_value: originalValue,
+                    uom: value.uom
+                });
+            }
+        });
+        
+        // Get mappings for this attribute
+        const mappingsResponse = await apiClient.loadValueMappings(attributeName);
+        const mappings = mappingsResponse.mappings || [];
+        
+        // Count unmapped values by checking each value against existing mappings
+        let unmappedCount = 0;
+        
+        allValues.forEach(value => {
+            const isMapped = mappings.some(
+                mapping =>
+                    mapping.pivotree_attribute_value === value.attribute_value &&
+                    ((!mapping.pivotree_uom && !value.uom) ||
+                     (mapping.pivotree_uom === value.uom))
+            );
+            
+            if (!isMapped) {
+                unmappedCount++;
+            }
+        });
+        
+        return unmappedCount;
+    } catch (error) {
+        console.error('Error getting unmapped values count:', error);
+        return null; // Return null on error to indicate count is unavailable
+    }
+}
+
+/**
+ * Update the attributes selector after mapping a value
+ * Call this function after successfully saving a value mapping
+ */
+function updateAttributeSelectorAfterMapping() {
+    // Only update if we've already saved at least one mapping
+    const currentState = state.getState();
+    const attributeName = currentState.valuesTab.selectedAttributeName;
     
-    // Add mapped attributes to the dropdown
-    mappedAttributes.forEach(attr => {
-        const option = document.createElement('option');
-        option.value = attr.pivotree_attribute_name;
-        option.textContent = `${attr.pivotree_attribute_name} → ${attr.akeneo_attribute_code || attr.new_attribute_code}`;
-        elements.attributeSelector.appendChild(option);
-    });
+    if (!attributeName) return;
+    
+    // Find the option in the dropdown
+    const option = Array.from(elements.attributeSelector.options).find(
+        opt => opt.value === attributeName
+    );
+    
+    if (!option) return;
+    
+    // Update the count asynchronously
+    getUnmappedValuesCount(attributeName)
+        .then(unmappedCount => {
+            if (unmappedCount === null) return;
+            
+            // Get the base text without the count
+            let baseText = option.textContent;
+            const countIndex = baseText.lastIndexOf(' (');
+            if (countIndex > -1) {
+                baseText = baseText.substring(0, countIndex);
+            }
+            
+            // Update the text with the new count
+            option.textContent = `${baseText} (${unmappedCount} unmapped values)`;
+            
+            // Update the styling
+            if (unmappedCount > 0) {
+                option.dataset.hasUnmapped = 'true';
+                option.style.fontWeight = 'bold';
+                option.style.color = '#bf3989';
+            } else {
+                option.dataset.hasUnmapped = 'false';
+                option.style.fontWeight = 'normal';
+                option.style.color = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error updating unmapped count:', error);
+        });
 }
 
 /**
@@ -414,8 +675,11 @@ function renderAttributeOptions(searchTerm = '') {
     const currentState = state.getState();
     const attributeValues = currentState.akeneo.attributeValues;
     
+    // Get the selected value to compare with
+    const selectedValue = currentState.valuesTab.selectedValue?.attribute_value || '';
+    
     // Filter options based on search term
-    const filteredOptions = searchTerm ?
+    let filteredOptions = searchTerm ?
         attributeValues.filter(option =>
             option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
             option.code.toLowerCase().includes(searchTerm.toLowerCase())
@@ -427,37 +691,105 @@ function renderAttributeOptions(searchTerm = '') {
         return;
     }
     
+    // Sort options based on similarity to the selected value
+    filteredOptions = filteredOptions.map(option => {
+        // Calculate similarity scores for both label and code
+        const labelSimilarity = calculateSimilarity(option.label, selectedValue);
+        const codeSimilarity = calculateSimilarity(option.code, selectedValue);
+        
+        // Use the higher score
+        const similarity = Math.max(labelSimilarity, codeSimilarity);
+        
+        return {
+            ...option,
+            similarity
+        };
+    });
+    
+    // Sort by similarity (highest first) with alphabetical sorting as secondary criteria
+    filteredOptions.sort((a, b) => {
+        // If similarity difference is significant, use it for sorting
+        if (Math.abs(b.similarity - a.similarity) > 0.1) {
+            return b.similarity - a.similarity;
+        }
+        // Otherwise, fall back to alphabetical order
+        return a.label.localeCompare(b.label);
+    });
+    
     // Create selectable list
     const list = document.createElement('ul');
     list.className = 'list-style-none';
     
-    filteredOptions.forEach(option => {
-        const item = document.createElement('li');
-        item.className = 'Box-row d-flex flex-items-center option-item';
-        item.setAttribute('data-value', option.code);
-        item.setAttribute('data-label', option.label);
+    // Add the top 10 similar options visually separated if not searching
+    if (!searchTerm && selectedValue) {
+        const topOptions = filteredOptions.slice(0, 10).filter(opt => opt.similarity > 0.3);
+        const remainingOptions = filteredOptions.filter(opt => !topOptions.includes(opt));
         
-        // Check if this option is currently selected
-        if (elements.akeneoValue && elements.akeneoValue.value === option.code) {
-            item.classList.add('selected', 'bg-blue-light');
-        }
+        // Sort remaining options alphabetically
+        remainingOptions.sort((a, b) => a.label.localeCompare(b.label));
         
-        item.innerHTML = `
-            <div class="flex-auto">
-                <span class="d-block text-bold">${option.label}</span>
-                <span class="d-block text-small text-gray">${option.code}</span>
-            </div>
-        `;
-        
-        // Add click handler
-        item.addEventListener('click', function() {
-            selectAttributeOption(this);
+        // Add top options with special highlighting
+        topOptions.forEach(option => {
+            addOptionToList(option, list, true);
         });
         
-        list.appendChild(item);
-    });
+        // Add a separator if we have any top options
+        if (topOptions.length > 0) {
+            const separator = document.createElement('li');
+            separator.className = 'Box-row bg-gray-light';
+            separator.innerHTML = '<div class="text-center text-gray">Other options</div>';
+            list.appendChild(separator);
+        }
+        
+        // Add remaining options
+        remainingOptions.forEach(option => {
+            addOptionToList(option, list, false);
+        });
+    } else {
+        // Just add all options normally
+        filteredOptions.forEach(option => {
+            addOptionToList(option, list, false);
+        });
+    }
     
     elements.akeneoValueList.appendChild(list);
+}
+
+/**
+ * Helper function to add an option to the list
+ * @param {Object} option - The option to add
+ * @param {HTMLElement} list - The list element to add to
+ * @param {Boolean} isRecommended - Whether this is a recommended/top match
+ */
+function addOptionToList(option, list, isRecommended) {
+    const item = document.createElement('li');
+    item.className = 'Box-row d-flex flex-items-center option-item';
+    if (isRecommended) {
+        item.classList.add('bg-yellow-light');
+    }
+    
+    item.setAttribute('data-value', option.code);
+    item.setAttribute('data-label', option.label);
+    
+    // Check if this option is currently selected
+    if (elements.akeneoValue && elements.akeneoValue.value === option.code) {
+        item.classList.add('selected', 'bg-blue-light');
+    }
+    
+    item.innerHTML = `
+        <div class="flex-auto">
+            <span class="d-block text-bold">${option.label}</span>
+            <span class="d-block text-small text-gray">${option.code}</span>
+            ${isRecommended ? '<span class="Label Label--yellow ml-1">Match</span>' : ''}
+        </div>
+    `;
+    
+    // Add click handler
+    item.addEventListener('click', function() {
+        selectAttributeOption(this);
+    });
+    
+    list.appendChild(item);
 }
 
 /**
@@ -621,7 +953,7 @@ function generateNewValueCode() {
     elements.newValueCode.value = attributePrefix + valueCode;
     
     // Set the label
-    elements.newValueLabel.value = uiUtils.formatValueLabel(attributeValue) + (uom ? ` (${uom})` : '');
+    elements.newValueLabel.value = uiUtils.formatValueLabel(attributeValue) + (uom ? ` ${uom}` : '');
 }
 
 /**
@@ -685,6 +1017,7 @@ async function saveValueMapping() {
         // Show success message
         uiUtils.showAlert('Value mapping saved successfully!');
         
+        
         // Hide the value mapping form
         if (elements.valueMappingForm) {
             elements.valueMappingForm.classList.add('d-none');
@@ -721,6 +1054,7 @@ async function saveValueMapping() {
         
         // Update the UI for just this value without reloading everything
         updateValueInTable(valueMapping);
+        updateAttributeSelectorAfterMapping();
         
     } catch (error) {
         console.error('Error saving value mapping:', error);

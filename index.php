@@ -10,11 +10,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 
     <link href="css/styles.css" rel="stylesheet" />
     <!-- IMPORTANT: Bridge script must be a regular script (not a module) and load BEFORE scripts.js -->
-    <!-- <script src="scripts/attribute-comparison/attribute-comparison-bridge.js"></script> -->
+    <script src="scripts/attribute-comparison/attribute-comparison-bridge.js"></script>
     <!-- Other scripts -->
     <script src="scripts/scripts.js" defer></script>
     <script src="scripts/pivotree-products.js"></script>

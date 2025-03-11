@@ -43,9 +43,11 @@ function initialize() {
         newAttributeType: uiUtils.getElement('new-attribute-type'),
         
         // Recent mappings
-        recentMappings: uiUtils.getElement('recent-mappings')
+        recentMappings: uiUtils.getElement('recent-mappings'),
+
+        
     };
-    
+    uiUtils.applyTableStyles();
     // Subscribe to state changes to update UI when needed
     state.subscribe((newState, path) => {
         if (path.startsWith('attributesTab')) {
@@ -66,6 +68,7 @@ function initialize() {
     
     // Load attributes
     loadAttributes();
+    
 }
 
 /**
