@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <!-- /var/www/html/du/index.php -->
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
@@ -12,14 +11,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-
     <link href="css/styles.css" rel="stylesheet" />
     <!-- IMPORTANT: Bridge script must be a regular script (not a module) and load BEFORE scripts.js -->
     <script src="scripts/attribute-comparison/attribute-comparison-bridge.js"></script>
     <!-- Other scripts -->
     <script src="scripts/scripts.js" defer></script>
     <script src="scripts/pivotree-products.js"></script>
-
+    <script src="scripts/pivotree-category-xref.js"></script>
 </head>
 
 <body>
