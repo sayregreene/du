@@ -75,6 +75,11 @@ const navigation = {
                 icon: ''
             },
             {
+                label: 'Category Cross Reference',
+                page: 'pivotree-category-xref',
+                icon: '<i class="pi pi-sitemap"></i>'
+            },
+            {
                 label: 'Normalization',
                 page: 'normalization',
                 icon: ''
@@ -235,7 +240,7 @@ async function loadPage(page, updateHistory = true, isSubmenuClick = false) {
         if (!mainResponse.ok) throw new Error(`Failed to load main content for ${page}`);
         const mainHtml = await mainResponse.text();
         
-        // INSERT THE CONTENT - this is the critical missing piece
+        // INSERT THE CONTENT
         mainContent.innerHTML = mainHtml;
         
         // Update browser history
@@ -250,7 +255,24 @@ async function loadPage(page, updateHistory = true, isSubmenuClick = false) {
                 initializeAttributeComparison();
             }
         } else if (page === 'pivotree-product-data') {
-            initializePivotreeProducts();
+            if (typeof initializePivotreeProducts === 'function') {
+                initializePivotreeProducts();
+            }
+        } else if (page === 'pivotree-category-xref') {
+            // Add our new page initialization
+            if (typeof initializeCategoryXref === 'function') {
+                initializeCategoryXref();
+            } else {
+                // Dynamically load the script if not already loaded
+                const script = document.createElement('script');
+                script.src = 'scripts/pivotree-category-xref.js';
+                script.onload = () => {
+                    if (typeof initializeCategoryXref === 'function') {
+                        initializeCategoryXref();
+                    }
+                };
+                document.head.appendChild(script);
+            }
         }
 
     } catch (error) {
